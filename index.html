@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>E-Wahl Dashboard</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+
+<h1>E-Wahl – Statusübersicht</h1>
+
+<div class="toolbar">
+  <button onclick="filterAmpel('alle')">Alle</button>
+  <button onclick="filterAmpel('rot')">🔴 Rot</button>
+  <button onclick="filterAmpel('gelb')">🟡 Gelb</button>
+  <button onclick="filterAmpel('gruen')">🟢 Grün</button>
+
+  <a href="marker.html" target="_blank">
+    <button class="pflege">Betrieb pflegen</button>
+  </a>
+</div>
+
+<div id="grid"></div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.toolbar {
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 8px 12px;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+button.pflege {
+  float: right;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.ampel {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.rot   { background: red; }
+.gelb { background: gold; }
+.gruen { background: green; }
+
+.meta {
+  font-size: 13px;
+  color: #555;
+}
