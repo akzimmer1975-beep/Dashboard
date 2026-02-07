@@ -1,28 +1,27 @@
-const API = "https://nextcloud-backend1.onrender.com/api/status";
+const API_STATUS = "https://nextcloud-backend1.onrender.com/api/status";
 
 let alleBetriebe = [];
 
-fetch(API)
+fetch(API_STATUS)
   .then(r => r.json())
   .then(daten => {
-    alleBetriebe = daten.map(b => ({
-      ...b,
-      ampel: berechneAmpel(b.files)
-    }));
-    render(alleBetriebe);
+    alleBetriebe = daten;
+    renderSummary(daten);
+    render(daten);
   })
   .catch(() => {
     document.getElementById("grid").textContent =
       "Fehler beim Laden der Statusdaten";
   });
 
-function berechneAmpel(files = []) {
-  if (files.some(f => f.includes("niederschrift"))) return "gruen";
-  if (
-    files.some(f => f.includes("wahlausschreiben")) ||
-    files.some(f => f.includes("wahlvorschlag"))
-  ) return "gelb";
-  return "rot";
+function renderSummary(liste) {
+  const gesamt = liste.length;
+  const gruen = liste.filter(b => b.ampel === "gruen").length;
+  const gelb  = liste.filter(b => b.ampel === "gelb").length;
+  const rot   = liste.filter(b => b.ampel === "rot").length;
+
+  document.getElementById("summary").textContent =
+    `Gesamt: ${gesamt} | 🟢 ${gruen} | 🟡 ${gelb} | 🔴 ${rot}`;
 }
 
 function render(liste) {
@@ -37,10 +36,11 @@ function render(liste) {
     div.innerHTML = `
       <div>
         <span class="ampel ${b.ampel}"></span>
-        <strong>${b.bkz}</strong> – ${b.bezirk}
+        <strong>BKZ ${b.bkz}</strong> – ${b.bezirk}
       </div>
       <div class="meta">
-        Dateien: ${b.files.length}
+        Status: ${statusText(b.ampel)}<br>
+        Dateien: ${b.files}
       </div>
     `;
 
@@ -51,7 +51,13 @@ function render(liste) {
 function filterAmpel(farbe) {
   if (farbe === "alle") {
     render(alleBetriebe);
-    return;
+  } else {
+    render(alleBetriebe.filter(b => b.ampel === farbe));
   }
-  render(alleBetriebe.filter(b => b.ampel === farbe));
+}
+
+function statusText(a) {
+  if (a === "gruen") return "Wahl beendet";
+  if (a === "gelb")  return "Wahlvorbereitung";
+  return "Noch nichts geschehen";
 }
