@@ -1,4 +1,4 @@
-const API_STATUS = "https://nexrcloud-backend-2.onrender.com";
+const API_BASE = "https://nexrcloud-backend-2.onrender.com";
 const API_STATUS = `${API_BASE}/api/status`;
 
 let alleBetriebe = [];
