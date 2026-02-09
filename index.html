@@ -11,6 +11,12 @@
 <h1>E-Wahl – Statusübersicht</h1>
 
 <div class="toolbar">
+  <label>
+    Bezirk:
+    <select id="bezirkFilter" onchange="applyFilter()">
+      <option value="">Alle Bezirke</option>
+    </select>
+  </label>
   <button onclick="filterAmpel('alle')">Alle</button>
   <button onclick="filterAmpel('rot')">🔴 Rot</button>
   <button onclick="filterAmpel('gelb')">🟡 Gelb</button>
