@@ -115,3 +115,21 @@ function render(liste) {
         <span class="ampel ${b.ampel}"></span>
         <strong>BKZ ${b.bkz}</strong> – ${b.bezirk}
       </div>
+      <div class="meta">
+        Status: ${statusText(b.ampel)}<br>
+        Dateien: ${b.files}
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+// ===============================
+// HELPER
+// ===============================
+function statusText(a) {
+  if (a === "gruen") return "Wahl beendet";
+  if (a === "gelb")  return "Wahlvorbereitung";
+  return "Noch nichts geschehen";
+}
