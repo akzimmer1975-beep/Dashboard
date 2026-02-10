@@ -23,8 +23,14 @@ let grid, viewport, spacer;
 function showOverlay(text = "Lade Statusdaten…") {
   const overlay = document.getElementById("overlay");
   if (!overlay) return;
+
   overlay.style.display = "flex";
-  overlay.querySelector('div span')?.textContent = text;
+
+  // Sicher prüfen, ob das span existiert, bevor wir textContent setzen
+  const span = overlay.querySelector('div span');
+  if (span) {
+    span.textContent = text;
+  }
 }
 
 function hideOverlay() {
