@@ -1,7 +1,7 @@
 // ===============================
 // KONFIGURATION
 // ===============================
-const API_BASE = "https://nextcloud-backend1.onrender.com";
+const API_BASE = "https://nexrcloud-backend-2.onrender.com";
 const API_STATUS = `${API_BASE}/api/status`;
 
 const ROW_HEIGHT = 80; // Höhe pro Karte
