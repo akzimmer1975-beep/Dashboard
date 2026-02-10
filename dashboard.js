@@ -1,7 +1,7 @@
 // ===============================
 // KONFIGURATION
 // ===============================
-const API_BASE = "https://nexrcloud-backend-2.onrender.com";
+const API_BASE = "https://nexrcloud-backend-2.onrender.com"; 
 const API_STATUS = `${API_BASE}/api/status`;
 
 const ROW_HEIGHT = 60;  // MUSS mit .card Höhe übereinstimmen
@@ -16,6 +16,22 @@ let ampelFilter = "alle";
 let bezirkFilter = "";
 
 let grid, viewport, spacer;
+
+// ===============================
+// OVERLAY
+// ===============================
+function showOverlay(text = "Lade Statusdaten…") {
+  const overlay = document.getElementById("overlay");
+  if (!overlay) return;
+  overlay.style.display = "flex";
+  overlay.querySelector('div span')?.textContent = text;
+}
+
+function hideOverlay() {
+  const overlay = document.getElementById("overlay");
+  if (!overlay) return;
+  overlay.style.display = "none";
+}
 
 // ===============================
 // INIT
@@ -41,19 +57,15 @@ document.addEventListener("DOMContentLoaded", () => {
 // LADEN STATUS
 // ===============================
 async function loadStatus() {
-  // Grid resetten
+  // Grid vorbereiten
   grid.innerHTML = "";
-
   spacer = document.createElement("div");
   viewport = document.createElement("div");
-
   viewport.className = "viewport";
-
   grid.appendChild(spacer);
   grid.appendChild(viewport);
 
-  // Ladeanzeige
-  viewport.innerHTML = "<div style='padding:15px;color:#666'>Lade Statusdaten…</div>";
+  showOverlay("Lade Statusdaten…");
 
   try {
     const res = await fetch(API_STATUS);
@@ -65,9 +77,10 @@ async function loadStatus() {
     fillBezirkFilter(alleBetriebe);
     applyFilter();
 
+    hideOverlay();
   } catch (err) {
     console.error("STATUS FETCH ERROR:", err);
-    viewport.innerHTML = "<div style='padding:15px;color:red'>Fehler beim Laden der Statusdaten</div>";
+    showOverlay("Fehler beim Laden der Statusdaten");
   }
 }
 
@@ -86,7 +99,6 @@ function applyFilter() {
     return true;
   });
 
-  // Sortierung: Bezirk -> BKZ
   gefilterteBetriebe.sort((a, b) => {
     if (a.bezirk !== b.bezirk) return a.bezirk.localeCompare(b.bezirk);
     return a.bkz.localeCompare(b.bkz);
