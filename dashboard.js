@@ -1,11 +1,11 @@
 // ===============================
 // KONFIGURATION
 // ===============================
-const API_BASE = "https://nexrcloud-backend-2.onrender.com";
+const API_BASE = "https://https://nexrcloud-backend-2.onrender.com";
 const API_STATUS = `${API_BASE}/api/status`;
 
-const ROW_HEIGHT = 80; // Höhe pro Karte
-const BUFFER = 5;      // virtuelle Pufferzeilen
+const ROW_HEIGHT = 60;  // MUSS mit .card Höhe übereinstimmen
+const BUFFER = 5;
 
 // ===============================
 // STATE
@@ -25,10 +25,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!grid) return console.error("GRID nicht gefunden");
 
   grid.style.overflowY = "auto";
+  grid.style.position = "relative";
 
   spacer = document.createElement("div");
   viewport = document.createElement("div");
-  viewport.style.position = "relative";
+  viewport.className = "viewport";
 
   grid.appendChild(spacer);
   grid.appendChild(viewport);
@@ -80,7 +81,7 @@ function applyFilter() {
     return true;
   });
 
-  // Sortierung nach Bezirk -> BKZ
+  // Sortierung: Bezirk -> BKZ
   gefilterteBetriebe.sort((a, b) => {
     if (a.bezirk !== b.bezirk) return a.bezirk.localeCompare(b.bezirk);
     return a.bkz.localeCompare(b.bkz);
@@ -94,16 +95,16 @@ function applyFilter() {
 }
 
 // ===============================
-// VIRTUAL SCROLL RENDER
+// VIRTUAL SCROLL
 // ===============================
 function renderVirtual() {
   if (!gefilterteBetriebe.length) {
-    viewport.innerHTML = "Keine Betriebe gefunden";
+    viewport.innerHTML = "<div style='padding:10px'>Keine Betriebe gefunden</div>";
     return;
   }
 
   const scrollTop = grid.scrollTop;
-  const viewHeight = grid.clientHeight;
+  const viewHeight = grid.clientHeight || 600;
 
   const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
   const end = Math.min(
@@ -119,7 +120,7 @@ function renderVirtual() {
   for (let i = start; i < end; i++) {
     const b = gefilterteBetriebe[i];
 
-    // Bezirksüberschrift nur einmal pro Bezirk
+    // Bezirksüberschrift
     if (b.bezirk !== lastBezirk) {
       const header = document.createElement("div");
       header.className = "bezirk-header";
@@ -137,6 +138,7 @@ function renderVirtual() {
       <strong>BKZ ${b.bkz}</strong>
       <span class="meta">${statusText(b.ampel)} · ${b.files} Datei(en)</span>
     `;
+
     viewport.appendChild(card);
   }
 }
@@ -162,7 +164,6 @@ function fillBezirkFilter(liste) {
   const select = document.getElementById("bezirkFilter");
   if (!select) return;
 
-  // alte Optionen löschen
   select.querySelectorAll("option:not([value=''])").forEach(o => o.remove());
 
   [...new Set(liste.map(b => b.bezirk))].sort().forEach(b => {

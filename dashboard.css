@@ -1,84 +1,127 @@
+/* ===============================
+   BASIS
+=============================== */
 body {
   font-family: Arial, sans-serif;
+  margin: 0;
   padding: 20px;
 }
 
 h1 {
+  margin-bottom: 15px;
+}
+
+/* ===============================
+   TOP BAR
+=============================== */
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
   margin-bottom: 10px;
 }
 
-.toolbar {
-  margin-bottom: 15px;
-}
-
-button {
-  padding: 8px 12px;
-  margin-right: 6px;
+.controls button {
+  padding: 6px 12px;
   cursor: pointer;
 }
 
-button.pflege {
-  float: right;
+.controls select {
+  padding: 6px;
 }
 
+/* ===============================
+   SUMMARY
+=============================== */
 #summary {
-  margin-bottom: 15px;
+  margin: 10px 0;
   font-weight: bold;
 }
 
-#grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
-}
-
-.card {
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 10px;
-}
-
-.ampel {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 8px;
-  vertical-align: middle;
-}
-
-.rot   { background: red; }
-.gelb { background: gold; }
-.gruen { background: green; }
-
-.meta {
-  font-size: 13px;
-  color: #555;
-}
+/* ===============================
+   GRID / VIRTUAL SCROLL
+=============================== */
 #grid {
   height: 70vh;
   overflow-y: auto;
   border: 1px solid #ccc;
+  position: relative;
+  background: #fff;
 }
 
+/* Spacer für Virtual Scroll */
+#grid > div {
+  box-sizing: border-box;
+}
+
+/* ===============================
+   VIEWPORT
+=============================== */
+.viewport {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+/* ===============================
+   BEZIRK HEADER
+=============================== */
 .bezirk-header {
   height: 30px;
   line-height: 30px;
   font-weight: bold;
   background: #f0f0f0;
   padding-left: 10px;
-}
-
-.card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px;
+  box-sizing: border-box;
   border-bottom: 1px solid #ddd;
 }
 
+/* ===============================
+   CARD
+=============================== */
+.card {
+  height: 60px;                 /* MUSS fix sein */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  box-sizing: border-box;
+}
+
+/* ===============================
+   AMPEL
+=============================== */
+.ampel {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.rot   { background: #e53935; }
+.gelb  { background: #fbc02d; }
+.gruen { background: #43a047; }
+
+/* ===============================
+   META
+=============================== */
 .meta {
   margin-left: auto;
   font-size: 12px;
   color: #555;
 }
+
+/* ===============================
+   BUTTONS
+=============================== */
+.btn-rot { background:#ffe5e5; }
+.btn-gelb { background:#fff4cc; }
+.btn-gruen { background:#e8f5e9; }
+
+.btn-rot:hover { background:#ffcccc; }
+.btn-gelb:hover { background:#ffec99; }
+.btn-gruen:hover { background:#d0f0d8; }
