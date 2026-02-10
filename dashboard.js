@@ -26,15 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   grid.style.overflowY = "auto";
   grid.style.position = "relative";
-
-  spacer = document.createElement("div");
-  viewport = document.createElement("div");
-  viewport.className = "viewport";
-
-  grid.appendChild(spacer);
-  grid.appendChild(viewport);
-
-  grid.addEventListener("scroll", renderVirtual);
+  grid.style.height = "70vh";
 
   const bezirkSelect = document.getElementById("bezirkFilter");
   bezirkSelect?.addEventListener("change", () => {
@@ -49,7 +41,20 @@ document.addEventListener("DOMContentLoaded", () => {
 // LADEN STATUS
 // ===============================
 async function loadStatus() {
-  grid.textContent = "Lade Statusdaten…";
+  // Grid resetten
+  grid.innerHTML = "";
+
+  spacer = document.createElement("div");
+  viewport = document.createElement("div");
+
+  viewport.className = "viewport";
+
+  grid.appendChild(spacer);
+  grid.appendChild(viewport);
+
+  // Ladeanzeige
+  viewport.innerHTML = "<div style='padding:15px;color:#666'>Lade Statusdaten…</div>";
+
   try {
     const res = await fetch(API_STATUS);
     if (!res.ok) throw new Error(res.status);
@@ -62,7 +67,7 @@ async function loadStatus() {
 
   } catch (err) {
     console.error("STATUS FETCH ERROR:", err);
-    grid.textContent = "Fehler beim Laden der Statusdaten";
+    viewport.innerHTML = "<div style='padding:15px;color:red'>Fehler beim Laden der Statusdaten</div>";
   }
 }
 
