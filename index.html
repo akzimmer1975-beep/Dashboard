@@ -17,10 +17,10 @@
       <option value="">Alle Bezirke</option>
     </select>
   </label>
-  <button onclick="filterAmpel('alle')">Alle</button>
-  <button onclick="filterAmpel('rot')">🔴 Rot</button>
-  <button onclick="filterAmpel('gelb')">🟡 Gelb</button>
-  <button onclick="filterAmpel('gruen')">🟢 Grün</button>
+  <button onclick="setfilterAmpel('alle')">Alle</button>
+  <button onclick="setfilterAmpel('rot')">🔴 Rot</button>
+  <button onclick="setfilterAmpel('gelb')">🟡 Gelb</button>
+  <button onclick="setfilterAmpel('gruen')">🟢 Grün</button>
 
   <a href="marker.html" target="_blank">
     <button class="pflege">Betrieb pflegen</button>
@@ -30,6 +30,6 @@
 <div id="summary"></div>
 <div id="grid"></div>
 
-<script src="dashboard.js?v=1"></script>
+<script src="dashboard.js?v=1" defer></script>
 </body>
 </html>
