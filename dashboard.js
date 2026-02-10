@@ -1,7 +1,7 @@
 // ===============================
 // KONFIGURATION
 // ===============================
-const API_BASE = "https://DEIN-RENDER-SERVICE.onrender.com";
+const API_BASE = "https://nexrcloud-backend-2.onrender.com";
 const API_STATUS = `${API_BASE}/api/status`;
 
 // ===============================
@@ -14,7 +14,7 @@ let ampelFilter = "alle";
 let bezirkFilter = "";
 
 // Virtual Scroll
-const ROW_HEIGHT = 70;      // Höhe einer Karte
+const ROW_HEIGHT = 80;      // Höhe einer Karte
 const BUFFER = 5;           // extra Elemente ober/unterhalb
 let container, spacer, viewport;
 
