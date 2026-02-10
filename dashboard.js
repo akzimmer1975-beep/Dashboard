@@ -1,7 +1,7 @@
 // ===============================
 // KONFIGURATION
 // ===============================
-const API_BASE = "https://nexrcloud-backend-2.onrender.com";
+const API_BASE = "https://nextcloud-backend1.onrender.com";
 const API_STATUS = `${API_BASE}/api/status`;
 
 // ===============================
@@ -13,44 +13,57 @@ let gefilterteBetriebe = [];
 let ampelFilter = "alle";
 let bezirkFilter = "";
 
-// Virtual Scroll
-const ROW_HEIGHT = 80;      // Höhe einer Karte
-const BUFFER = 5;           // extra Elemente ober/unterhalb
-let container, spacer, viewport;
+// Virtual Scrolling
+const ROW_HEIGHT = 80; // Karte + evtl. Header
+const BUFFER = 5;
+
+let grid, spacer, viewport;
 
 // ===============================
 // INIT
 // ===============================
 document.addEventListener("DOMContentLoaded", () => {
-  container = document.getElementById("grid");
+  grid = document.getElementById("grid");
 
+  if (!grid) {
+    console.error("GRID nicht gefunden");
+    return;
+  }
+
+  grid.innerHTML = "";
+  grid.style.overflowY = "auto";
+
+  spacer = document.createElement("div");
   viewport = document.createElement("div");
   viewport.style.position = "relative";
 
-  spacer = document.createElement("div");
+  grid.appendChild(spacer);
+  grid.appendChild(viewport);
 
-  container.innerHTML = "";
-  container.appendChild(spacer);
-  container.appendChild(viewport);
+  grid.addEventListener("scroll", renderVirtual);
 
-  container.addEventListener("scroll", renderVirtual);
-
-  loadData();
+  loadStatus();
 });
 
-function loadData() {
-  container.textContent = "Lade Statusdaten…";
+// ===============================
+// DATEN LADEN
+// ===============================
+function loadStatus() {
+  grid.textContent = "Lade Statusdaten…";
 
   fetch(API_STATUS)
-    .then(r => r.json())
-    .then(daten => {
-      alleBetriebe = daten;
-      fillBezirkFilter(daten);
+    .then(r => {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    })
+    .then(data => {
+      alleBetriebe = Array.isArray(data) ? data : [];
+      fillBezirkFilter(alleBetriebe);
       applyFilter();
     })
     .catch(err => {
-      console.error(err);
-      container.textContent = "Fehler beim Laden der Statusdaten";
+      console.error("STATUS FETCH ERROR:", err);
+      grid.textContent = "Fehler beim Laden der Statusdaten";
     });
 }
 
@@ -63,8 +76,8 @@ function setAmpelFilter(farbe) {
 }
 
 function applyFilter() {
-  const sel = document.getElementById("bezirkFilter");
-  bezirkFilter = sel ? sel.value : "";
+  const select = document.getElementById("bezirkFilter");
+  bezirkFilter = select ? select.value : "";
 
   gefilterteBetriebe = alleBetriebe.filter(b => {
     if (bezirkFilter && b.bezirk !== bezirkFilter) return false;
@@ -74,31 +87,38 @@ function applyFilter() {
 
   // Sortierung: Bezirk → BKZ
   gefilterteBetriebe.sort((a, b) => {
-    if (a.bezirk !== b.bezirk) return a.bezirk.localeCompare(b.bezirk);
+    if (a.bezirk !== b.bezirk) {
+      return a.bezirk.localeCompare(b.bezirk);
+    }
     return a.bkz.localeCompare(b.bkz);
   });
 
   renderSummary(gefilterteBetriebe);
+
   spacer.style.height = `${gefilterteBetriebe.length * ROW_HEIGHT}px`;
-  container.scrollTop = 0;
+  grid.scrollTop = 0;
   renderVirtual();
 }
 
 // ===============================
-// VIRTUAL SCROLL RENDERING
+// VIRTUAL SCROLL RENDER
 // ===============================
 function renderVirtual() {
-  const scrollTop = container.scrollTop;
-  const height = container.clientHeight;
+  if (!gefilterteBetriebe.length) {
+    viewport.innerHTML = "Keine Betriebe gefunden";
+    return;
+  }
+
+  const scrollTop = grid.scrollTop;
+  const viewHeight = grid.clientHeight;
 
   const start = Math.max(
     0,
     Math.floor(scrollTop / ROW_HEIGHT) - BUFFER
   );
-
   const end = Math.min(
     gefilterteBetriebe.length,
-    Math.ceil((scrollTop + height) / ROW_HEIGHT) + BUFFER
+    Math.ceil((scrollTop + viewHeight) / ROW_HEIGHT) + BUFFER
   );
 
   viewport.innerHTML = "";
@@ -109,7 +129,7 @@ function renderVirtual() {
   for (let i = start; i < end; i++) {
     const b = gefilterteBetriebe[i];
 
-    // === Bezirks-Überschrift ===
+    // Bezirksüberschrift
     if (b.bezirk !== lastBezirk) {
       const header = document.createElement("div");
       header.className = "bezirk-header";
@@ -120,13 +140,13 @@ function renderVirtual() {
 
     const card = document.createElement("div");
     card.className = "card";
-    card.style.height = `${ROW_HEIGHT - 10}px`;
+    card.dataset.ampel = b.ampel;
 
     card.innerHTML = `
       <span class="ampel ${b.ampel}"></span>
       <strong>BKZ ${b.bkz}</strong>
       <span class="meta">
-        ${statusText(b.ampel)} · ${b.files} Dateien
+        ${statusText(b.ampel)} · ${b.files} Datei(en)
       </span>
     `;
 
@@ -138,19 +158,19 @@ function renderVirtual() {
 // SUMMARY
 // ===============================
 function renderSummary(liste) {
-  const sum = document.getElementById("summary");
-  if (!sum) return;
+  const el = document.getElementById("summary");
+  if (!el) return;
 
   const g = liste.filter(b => b.ampel === "gruen").length;
   const y = liste.filter(b => b.ampel === "gelb").length;
   const r = liste.filter(b => b.ampel === "rot").length;
 
-  sum.textContent =
+  el.textContent =
     `Gesamt: ${liste.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
 }
 
 // ===============================
-// BEZIRK DROPDOWN
+// BEZIRKSFILTER
 // ===============================
 function fillBezirkFilter(liste) {
   const select = document.getElementById("bezirkFilter");
