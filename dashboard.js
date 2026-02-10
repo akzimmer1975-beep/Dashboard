@@ -1,56 +1,61 @@
 // ===============================
 // KONFIGURATION
 // ===============================
-const API_BASE = "https://nexrcloud-backend-2.onrender.com";
+const API_BASE = "https://DEIN-RENDER-SERVICE.onrender.com";
 const API_STATUS = `${API_BASE}/api/status`;
 
 // ===============================
 // STATE
 // ===============================
 let alleBetriebe = [];
+let gefilterteBetriebe = [];
+
 let ampelFilter = "alle";
 let bezirkFilter = "";
+
+// Virtual Scroll
+const ROW_HEIGHT = 70;      // Höhe einer Karte
+const BUFFER = 5;           // extra Elemente ober/unterhalb
+let container, spacer, viewport;
 
 // ===============================
 // INIT
 // ===============================
-fetch(API_STATUS)
-  .then(res => res.json())
-  .then(daten => {
-    alleBetriebe = daten;
+document.addEventListener("DOMContentLoaded", () => {
+  container = document.getElementById("grid");
 
-    fillBezirkFilter(daten);
-    renderSummary(daten);
-    render(daten);
-  })
-  .catch(err => {
-    console.error("STATUS FETCH ERROR:", err);
-    const grid = document.getElementById("grid");
-    if (grid) grid.textContent = "Fehler beim Laden der Statusdaten";
-  });
+  viewport = document.createElement("div");
+  viewport.style.position = "relative";
 
-// ===============================
-// BEZIRK FILTER FÜLLEN
-// ===============================
-function fillBezirkFilter(liste) {
-  const select = document.getElementById("bezirkFilter");
-  if (!select) return;
+  spacer = document.createElement("div");
 
-  // bestehende (außer 'Alle') löschen
-  select.querySelectorAll("option:not([value=''])").forEach(o => o.remove());
+  container.innerHTML = "";
+  container.appendChild(spacer);
+  container.appendChild(viewport);
 
-  const bezirke = [...new Set(liste.map(b => b.bezirk))].sort();
+  container.addEventListener("scroll", renderVirtual);
 
-  bezirke.forEach(b => {
-    const opt = document.createElement("option");
-    opt.value = b;
-    opt.textContent = b;
-    select.appendChild(opt);
-  });
+  loadData();
+});
+
+function loadData() {
+  container.textContent = "Lade Statusdaten…";
+
+  fetch(API_STATUS)
+    .then(r => r.json())
+    .then(daten => {
+      alleBetriebe = daten;
+      fillBezirkFilter(daten);
+      applyFilter();
+    })
+    .catch(err => {
+      console.error(err);
+      container.textContent = "Fehler beim Laden der Statusdaten";
+    });
 }
 
 // ===============================
-// FILTER STEUERN
+// FILTER
 // ===============================
 function setAmpelFilter(farbe) {
   ampelFilter = farbe;
@@ -61,18 +66,72 @@ function applyFilter() {
   const sel = document.getElementById("bezirkFilter");
   bezirkFilter = sel ? sel.value : "";
 
-  let liste = [...alleBetriebe];
+  gefilterteBetriebe = alleBetriebe.filter(b => {
+    if (bezirkFilter && b.bezirk !== bezirkFilter) return false;
+    if (ampelFilter !== "alle" && b.ampel !== ampelFilter) return false;
+    return true;
+  });
 
-  if (bezirkFilter) {
-    liste = liste.filter(b => b.bezirk === bezirkFilter);
+  // Sortierung: Bezirk → BKZ
+  gefilterteBetriebe.sort((a, b) => {
+    if (a.bezirk !== b.bezirk) return a.bezirk.localeCompare(b.bezirk);
+    return a.bkz.localeCompare(b.bkz);
+  });
+
+  renderSummary(gefilterteBetriebe);
+  spacer.style.height = `${gefilterteBetriebe.length * ROW_HEIGHT}px`;
+  container.scrollTop = 0;
+  renderVirtual();
+}
+
+// ===============================
+// VIRTUAL SCROLL RENDERING
+// ===============================
+function renderVirtual() {
+  const scrollTop = container.scrollTop;
+  const height = container.clientHeight;
+
+  const start = Math.max(
+    0,
+    Math.floor(scrollTop / ROW_HEIGHT) - BUFFER
+  );
+
+  const end = Math.min(
+    gefilterteBetriebe.length,
+    Math.ceil((scrollTop + height) / ROW_HEIGHT) + BUFFER
+  );
+
+  viewport.innerHTML = "";
+  viewport.style.transform = `translateY(${start * ROW_HEIGHT}px)`;
+
+  let lastBezirk = null;
+
+  for (let i = start; i < end; i++) {
+    const b = gefilterteBetriebe[i];
+
+    // === Bezirks-Überschrift ===
+    if (b.bezirk !== lastBezirk) {
+      const header = document.createElement("div");
+      header.className = "bezirk-header";
+      header.textContent = b.bezirk;
+      viewport.appendChild(header);
+      lastBezirk = b.bezirk;
+    }
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.height = `${ROW_HEIGHT - 10}px`;
+
+    card.innerHTML = `
+      <span class="ampel ${b.ampel}"></span>
+      <strong>BKZ ${b.bkz}</strong>
+      <span class="meta">
+        ${statusText(b.ampel)} · ${b.files} Dateien
+      </span>
+    `;
+
+    viewport.appendChild(card);
   }
-
-  if (ampelFilter !== "alle") {
-    liste = liste.filter(b => b.ampel === ampelFilter);
-  }
-
-  renderSummary(liste);
-  render(liste);
 }
 
 // ===============================
@@ -82,47 +141,31 @@ function renderSummary(liste) {
   const sum = document.getElementById("summary");
   if (!sum) return;
 
-  const total = liste.length;
-  const gruen = liste.filter(b => b.ampel === "gruen").length;
-  const gelb  = liste.filter(b => b.ampel === "gelb").length;
-  const rot   = liste.filter(b => b.ampel === "rot").length;
+  const g = liste.filter(b => b.ampel === "gruen").length;
+  const y = liste.filter(b => b.ampel === "gelb").length;
+  const r = liste.filter(b => b.ampel === "rot").length;
 
   sum.textContent =
-    `Gesamt: ${total} | 🟢 ${gruen} | 🟡 ${gelb} | 🔴 ${rot}`;
+    `Gesamt: ${liste.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
 }
 
 // ===============================
-// RENDER GRID
+// BEZIRK DROPDOWN
 // ===============================
-function render(liste) {
-  const grid = document.getElementById("grid");
-  if (!grid) return;
+function fillBezirkFilter(liste) {
+  const select = document.getElementById("bezirkFilter");
+  if (!select) return;
 
-  grid.innerHTML = "";
+  select.querySelectorAll("option:not([value=''])").forEach(o => o.remove());
 
-  if (!liste.length) {
-    grid.textContent = "Keine Betriebe gefunden";
-    return;
-  }
-
-  liste.forEach(b => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.ampel = b.ampel;
-
-    card.innerHTML = `
-      <div>
-        <span class="ampel ${b.ampel}"></span>
-        <strong>BKZ ${b.bkz}</strong> – ${b.bezirk}
-      </div>
-      <div class="meta">
-        Status: ${statusText(b.ampel)}<br>
-        Dateien: ${b.files}
-      </div>
-    `;
-
-    grid.appendChild(card);
-  });
+  [...new Set(liste.map(b => b.bezirk))]
+    .sort()
+    .forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = b;
+      opt.textContent = b;
+      select.appendChild(opt);
+    });
 }
 
 // ===============================
@@ -130,6 +173,6 @@ function render(liste) {
 // ===============================
 function statusText(a) {
   if (a === "gruen") return "Wahl beendet";
-  if (a === "gelb")  return "Wahlvorbereitung";
+  if (a === "gelb") return "Wahlvorbereitung";
   return "Noch nichts geschehen";
 }
