@@ -1,0 +1,90 @@
+<h1>Dashboard</h1>
+
+<label>Filter Ampel:
+  <select id="ampelFilter">
+    <option value="alle">Alle</option>
+    <option value="gruen">Grün</option>
+    <option value="gelb">Gelb</option>
+    <option value="rot">Rot</option>
+  </select>
+</label>
+
+<label>Filter Bezirk:
+  <select id="bezirkFilter">
+    <option value="">Alle</option>
+  </select>
+</label>
+
+<div id="summary"></div>
+<div id="grid"></div>
+
+<script>
+const API_STATUS = "https://nexrcloud-backend-2.onrender.com/api/status";
+let alleBetriebe = [];
+
+async function loadStatusDashboard() {
+  try {
+    const res = await fetch(API_STATUS);
+    const data = await res.json();
+    alleBetriebe = Array.isArray(data) ? data : [];
+
+    // Bezirk-Filter füllen
+    const bezirkSelect = document.getElementById("bezirkFilter");
+    [...new Set(alleBetriebe.map(b => b.bezirk))].sort().forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = b; opt.textContent = b;
+      bezirkSelect.appendChild(opt);
+    });
+
+    renderDashboard(alleBetriebe);
+    renderSummary(alleBetriebe);
+  } catch(err) { console.error(err); }
+}
+
+// Dashboard render
+function renderDashboard(liste) {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  let lastBezirk = null;
+  liste.forEach(b => {
+    if (b.bezirk !== lastBezirk) {
+      const header = document.createElement("div");
+      header.className = "bezirk-header"; header.textContent = b.bezirk;
+      fragment.appendChild(header);
+      lastBezirk = b.bezirk;
+    }
+    const card = document.createElement("div");
+    card.className = "card"; card.dataset.ampel = b.ampel;
+    card.innerHTML = `<span class="ampel ${b.ampel}">●</span>
+      <strong>BKZ ${b.bkz}</strong>
+      <span class="meta">${b.files} Datei(en)</span>`;
+    fragment.appendChild(card);
+  });
+  grid.appendChild(fragment);
+}
+
+// Summary
+function renderSummary(liste) {
+  const el = document.getElementById("summary");
+  const g = liste.filter(b => b.ampel === "gruen").length;
+  const y = liste.filter(b => b.ampel === "gelb").length;
+  const r = liste.filter(b => b.ampel === "rot").length;
+  el.textContent = `Gesamt: ${liste.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
+}
+
+// Filter -> weiter zur Virtual Scroll Liste
+function redirectToListe() {
+  const amp = document.getElementById("ampelFilter").value;
+  const bez = document.getElementById("bezirkFilter").value;
+  const params = new URLSearchParams();
+  if (amp !== "alle") params.set("ampel", amp);
+  if (bez) params.set("bezirk", bez);
+  window.location.href = `liste.html?${params.toString()}`;
+}
+
+document.getElementById("ampelFilter").addEventListener("change", redirectToListe);
+document.getElementById("bezirkFilter").addEventListener("change", redirectToListe);
+
+document.addEventListener("DOMContentLoaded", loadStatusDashboard);
+</script>
