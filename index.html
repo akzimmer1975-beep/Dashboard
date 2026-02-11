@@ -1,78 +1,59 @@
-<h1>Betriebsliste (Virtual Scroll)</h1>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Startseite</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 50px; text-align: center; }
+  button { font-size: 18px; padding: 15px 30px; margin: 20px; cursor: pointer; }
+  button:disabled { background-color: #ccc; cursor: not-allowed; }
+</style>
+</head>
+<body>
 
-<button id="backButton">← Zurück zum Dashboard</button>
-<div id="grid"></div>
+<h1>Willkommen</h1>
+<p>Daten werden geladen… bitte warten</p>
+
+<button id="dashboardBtn" disabled>Dashboard</button>
+<button id="qrBtn">QR-Generator</button>
 
 <script>
 const API_STATUS = "https://nexrcloud-backend-2.onrender.com/api/status";
-const ROW_HEIGHT = 60, BUFFER = 5;
-let alleBetriebe = [], gefilterteBetriebe = [];
-let grid, viewport, spacer;
 
-const urlParams = new URLSearchParams(window.location.search);
-let ampelFilter = urlParams.get("ampel") || "alle";
-let bezirkFilter = urlParams.get("bezirk") || "";
+const dashboardBtn = document.getElementById("dashboardBtn");
+const qrBtn = document.getElementById("qrBtn");
 
-// Zurück-Taste
-document.getElementById("backButton").addEventListener("click", () => {
-  window.history.back();
+// QR-Generator immer klickbar
+qrBtn.addEventListener("click", () => {
+  window.location.href = "qr-generator.html";
 });
 
-// Load Daten
-async function loadStatusVirtualScroll() {
-  grid = document.getElementById("grid");
-  grid.innerHTML = "";
-  spacer = document.createElement("div");
-  viewport = document.createElement("div"); viewport.className = "viewport";
-  grid.appendChild(spacer); grid.appendChild(viewport);
+// Dashboard-Button aktivieren, wenn Daten geladen
+async function loadApiData() {
+  try {
+    const res = await fetch(API_STATUS);
+    const data = await res.json();
+    const alleBetriebe = Array.isArray(data) ? data : [];
 
-  const res = await fetch(API_STATUS);
-  const data = await res.json();
-  alleBetriebe = Array.isArray(data) ? data : [];
+    // Daten in localStorage speichern
+    localStorage.setItem("apiData", JSON.stringify(alleBetriebe));
 
-  applyFilter();
-}
-
-// Filter & sort
-function applyFilter() {
-  gefilterteBetriebe = alleBetriebe.filter(b => 
-    (ampelFilter === "alle" || b.ampel === ampelFilter) &&
-    (!bezirkFilter || b.bezirk === bezirkFilter)
-  );
-  gefilterteBetriebe.sort((a,b)=>a.bezirk.localeCompare(b.bezirk));
-  renderVirtual();
-}
-
-// Virtual Scroll render
-function renderVirtual() {
-  if (!gefilterteBetriebe.length) {
-    viewport.innerHTML = "<div style='padding:10px'>Keine Betriebe gefunden</div>";
-    return;
-  }
-
-  const scrollTop = grid.scrollTop;
-  const viewHeight = grid.clientHeight || 600;
-  const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER);
-  const end = Math.min(gefilterteBetriebe.length, Math.ceil((scrollTop + viewHeight) / ROW_HEIGHT) + BUFFER);
-
-  viewport.innerHTML = "";
-  viewport.style.transform = `translateY(${start * ROW_HEIGHT}px)`;
-
-  let lastBezirk = null;
-  for (let i=start;i<end;i++){
-    const b = gefilterteBetriebe[i];
-    if(b.bezirk!==lastBezirk){
-      const h = document.createElement("div"); h.className="bezirk-header"; h.textContent=b.bezirk;
-      viewport.appendChild(h); lastBezirk=b.bezirk;
-    }
-    const card = document.createElement("div"); card.className="card"; card.dataset.ampel=b.ampel;
-    card.innerHTML = `<span class="ampel ${b.ampel}">●</span>
-      <strong>BKZ ${b.bkz}</strong>
-      <span class="meta">${b.files} Datei(en)</span>`;
-    viewport.appendChild(card);
+    // Dashboard-Button aktivieren
+    dashboardBtn.disabled = false;
+  } catch(err) {
+    console.error("Fehler beim Laden der Daten:", err);
+    alert("Daten konnten nicht geladen werden. Bitte Seite neu laden.");
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadStatusVirtualScroll);
-grid?.addEventListener("scroll", renderVirtual);
+// Klick auf Dashboard-Button
+dashboardBtn.addEventListener("click", () => {
+  window.location.href = "dashboard.html";
+});
+
+// API-Daten sofort laden
+loadApiData();
 </script>
+
+</body>
+</html>
