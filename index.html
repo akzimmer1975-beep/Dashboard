@@ -1,59 +1,84 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Startseite</title>
-<style>
-  body { font-family: Arial, sans-serif; padding: 50px; text-align: center; }
-  button { font-size: 18px; padding: 15px 30px; margin: 20px; cursor: pointer; }
-  button:disabled { background-color: #ccc; cursor: not-allowed; }
-</style>
+  <meta charset="UTF-8">
+  <title>BR Wahlen 2026 – Startseite</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    body {
+      text-align: center;
+      padding: 40px;
+    }
+    button {
+      margin: 12px;
+      padding: 12px 24px;
+      font-size: 1.2em;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+      background-color: #ffffff;
+      color: #228B22;
+      transition: background 0.2s;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      color: #666;
+    }
+    button:hover:enabled {
+      background-color: #f0f0f0;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Willkommen</h1>
-<p>Daten werden geladen… bitte warten</p>
+  <h1>BR Wahlen 2026</h1>
 
-<button id="dashboardBtn" disabled>Dashboard</button>
-<button id="qrBtn">QR-Generator</button>
+  <div class="button-group">
+    <button id="dashboardBtn" disabled>Dashboard</button>
+    <button id="qrBtn">QR-Generator</button>
+  </div>
 
-<script>
-const API_STATUS = "https://nexrcloud-backend-2.onrender.com/api/status";
+  <div id="overlay" style="display:none;">
+    Lade Statusdaten…
+  </div>
 
-const dashboardBtn = document.getElementById("dashboardBtn");
-const qrBtn = document.getElementById("qrBtn");
+  <script>
+    const API_STATUS = "https://nexrcloud-backend-2.onrender.com/api/status";
+    const dashboardBtn = document.getElementById("dashboardBtn");
+    const qrBtn = document.getElementById("qrBtn");
+    const overlay = document.getElementById("overlay");
 
-// QR-Generator immer klickbar
-qrBtn.addEventListener("click", () => {
-  window.location.href = "qr-generator.html";
-});
+    // QR-Button klick
+    qrBtn.addEventListener("click", () => {
+      window.location.href = "pages/qr-generator.html"; // Pfad zum QR-Generator
+    });
 
-// Dashboard-Button aktivieren, wenn Daten geladen
-async function loadApiData() {
-  try {
-    const res = await fetch(API_STATUS);
-    const data = await res.json();
-    const alleBetriebe = Array.isArray(data) ? data : [];
+    // Dashboard-Button klick
+    dashboardBtn.addEventListener("click", () => {
+      window.location.href = "pages/dashboard.html"; // Pfad zur Dashboard-Seite
+    });
 
-    // Daten in localStorage speichern
-    localStorage.setItem("apiData", JSON.stringify(alleBetriebe));
+    // API laden und in localStorage speichern
+    async function loadApiData() {
+      overlay.style.display = "block";
+      try {
+        const res = await fetch(API_STATUS);
+        if (!res.ok) throw new Error("API konnte nicht geladen werden");
+        const data = await res.json();
+        localStorage.setItem("apiData", JSON.stringify(data));
+        dashboardBtn.disabled = false; // Dashboard-Button aktivieren
+      } catch (err) {
+        console.error("Fehler beim Laden der API:", err);
+        alert("Fehler beim Laden der Statusdaten!");
+      } finally {
+        overlay.style.display = "none";
+      }
+    }
 
-    // Dashboard-Button aktivieren
-    dashboardBtn.disabled = false;
-  } catch(err) {
-    console.error("Fehler beim Laden der Daten:", err);
-    alert("Daten konnten nicht geladen werden. Bitte Seite neu laden.");
-  }
-}
-
-// Klick auf Dashboard-Button
-dashboardBtn.addEventListener("click", () => {
-  window.location.href = "dashboard.html";
-});
-
-// API-Daten sofort laden
-loadApiData();
-</script>
+    document.addEventListener("DOMContentLoaded", loadApiData);
+  </script>
 
 </body>
 </html>
