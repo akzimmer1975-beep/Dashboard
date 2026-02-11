@@ -159,3 +159,60 @@ h1 {
   to { transform: rotate(360deg); }
 }
 
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+/* Sticky linker Bereich (Virtual-Scroll Look) */
+.card-row .ampel-btn {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+/* Ampel Button Design */
+.ampel-btn {
+  min-width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  background: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.ampel-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 6px rgba(0,0,0,0.25);
+}
+
+/* Touch Optimierung */
+.ampel-btn:active {
+  transform: scale(0.95);
+}
+
+/* BKZ Link */
+.bkz-link {
+  font-weight: 600;
+  text-decoration: none;
+  color: #1a1a1a;
+  min-width: 120px;
+}
+
+.bkz-link:hover {
+  text-decoration: underline;
+}
+
+/* Info Text */
+.card-info {
+  color: #444;
+  font-size: 14px;
+  white-space: nowrap;
+}
