@@ -1,30 +1,22 @@
 let alleBetriebe = [];
+let ampelFilter = [];   // Multi-Ampel-Filter
 
-// -----------------------------
-// INIT
-// -----------------------------
+// ---------------- INIT ----------------
 document.addEventListener("DOMContentLoaded", () => {
-  const overlay = document.getElementById("overlay");
-  overlay.style.display = "flex"; // Overlay während "Laden"
-
+  document.getElementById("overlay").style.display = "flex";
   loadDataFromLocalStorage();
   fillBezirkFilter();
   renderDashboard();
-
-  overlay.style.display = "none"; // Overlay ausblenden, wenn fertig
+  document.getElementById("overlay").style.display = "none";
 });
 
-// -----------------------------
-// DATEN AUS LOCALSTORAGE LADEN
-// -----------------------------
+// ---------------- DATA ----------------
 function loadDataFromLocalStorage() {
   const data = localStorage.getItem("apiData");
   alleBetriebe = data ? JSON.parse(data) : [];
 }
 
-// -----------------------------
-// BEZIRK-FILTER FÜLLEN
-// -----------------------------
+// ---------------- FILTER ----------------
 function fillBezirkFilter() {
   const select = document.getElementById("bezirkFilter");
   select.innerHTML = `<option value="">Alle Bezirke</option>`;
@@ -39,20 +31,46 @@ function fillBezirkFilter() {
     });
 }
 
-// -----------------------------
-// DASHBOARD RENDER
-// -----------------------------
+function applyFilter(){
+  renderDashboard();
+}
+
+function toggleAmpel(farbe){
+  if(ampelFilter.includes(farbe)){
+    ampelFilter = ampelFilter.filter(f => f !== farbe);
+  } else {
+    ampelFilter.push(farbe);
+  }
+  renderDashboard();
+}
+
+function clearFilter(){
+  ampelFilter = [];
+  document.getElementById("bezirkFilter").value = "";
+  renderDashboard();
+}
+
+// ---------------- RENDER ----------------
 function renderDashboard() {
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
+  const list = document.getElementById("listContainer");
+  list.innerHTML = "";
 
   const bezirkFilter = document.getElementById("bezirkFilter").value;
-  const filtered = bezirkFilter ? alleBetriebe.filter(b => b.bezirk === bezirkFilter) : alleBetriebe;
+  let filtered = alleBetriebe;
+
+  if (bezirkFilter) {
+    filtered = filtered.filter(b => b.bezirk === bezirkFilter);
+  }
+
+  if (ampelFilter.length > 0) {
+    filtered = filtered.filter(b => ampelFilter.includes(b.ampel));
+  }
 
   let lastBezirk = null;
   const fragment = document.createDocumentFragment();
 
   filtered.forEach(b => {
+
     if (b.bezirk !== lastBezirk) {
       const header = document.createElement("div");
       header.className = "bezirk-header";
@@ -62,23 +80,24 @@ function renderDashboard() {
     }
 
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = "card-row";
 
-    const ampBtn = document.createElement("button");
+    // Ampel (nur Anzeige)
+    const ampBtn = document.createElement("div");
     ampBtn.className = `ampel-btn ${b.ampel}`;
     ampBtn.textContent =
       b.ampel === "gruen" ? "🟢" :
       b.ampel === "gelb" ? "🟡" :
-      b.ampel === "rot" ? "🔴" : "";
-    ampBtn.title = b.ampel.toUpperCase();
-    ampBtn.onclick = () => goToIndex(b.ampel, b.bezirk);
+      b.ampel === "rot"  ? "🔴" : "";
 
+    // BKZ
     const bkzLink = document.createElement("a");
-    bkzLink.href = `marker.html?bezirk=${encodeURIComponent(b.bezirk)}&bkz=${encodeURIComponent(b.bkz)}`;
+    bkzLink.href = `../marker.html?bezirk=${encodeURIComponent(b.bezirk)}&bkz=${encodeURIComponent(b.bkz)}`;
     bkzLink.textContent = `BKZ ${b.bkz}`;
     bkzLink.target = "_blank";
     bkzLink.className = "bkz-link";
 
+    // Info
     const info = document.createElement("div");
     info.className = "card-info";
     info.innerHTML = `(${b.bezirk}) – Dateien: <b>${b.files}</b>`;
@@ -90,35 +109,19 @@ function renderDashboard() {
     fragment.appendChild(card);
   });
 
-  grid.appendChild(fragment);
+  list.appendChild(fragment);
 
-  // Summary
-  const el = document.getElementById("summary");
-  const g = filtered.filter(b => b.ampel === "gruen").length;
-  const y = filtered.filter(b => b.ampel === "gelb").length;
-  const r = filtered.filter(b => b.ampel === "rot").length;
-  el.textContent = `Gesamt: ${filtered.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
+  updateSummaryUI();
 }
 
-// -----------------------------
-// FILTER-FUNKTIONEN
-// -----------------------------
-function applyFilter() {
-  renderDashboard();
-}
+// ---------------- UI STATE ----------------
+function updateSummaryUI(){
+  document.querySelectorAll(".sum-btn").forEach(btn=>{
+    btn.classList.remove("active");
+  });
 
-function setAmpelFilter(farbe) {
-  const select = document.getElementById("bezirkFilter");
-  const bezirk = select.value;
-  goToIndex(farbe, bezirk);
-}
-
-// -----------------------------
-// WEITERLEITUNG ZUR INDEX-SEITE
-// -----------------------------
-function goToIndex(ampel, bezirk) {
-  const params = new URLSearchParams();
-  if (ampel && ampel !== "alle") params.set("ampel", ampel);
-  if (bezirk) params.set("bezirk", bezirk);
-  window.location.href = `/pages/dashboard.html?${params.toString()}`;
+  ampelFilter.forEach(f=>{
+    const btn = document.querySelector(`.sum-btn.${f}`);
+    if(btn) btn.classList.add("active");
+  });
 }

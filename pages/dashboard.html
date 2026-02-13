@@ -20,10 +20,6 @@
   color:#228B22;
   font-weight:bold;
 }
-
-.toolbar{
-  margin-bottom:10px;
-}
 </style>
 </head>
 
@@ -35,23 +31,25 @@
 
 <h1>BR-Wahl – Dashboard</h1>
 
-<div class="toolbar">
-  <label>
-    Bezirk:
-    <select id="bezirkFilter" onchange="applyFilter()">
-      <option value="">Alle Bezirke</option>
-    </select>
-  </label>
-</div>
+<!-- FILTER BOX -->
+<div class="filter-box">
+  <div class="filter-title">Filter</div>
 
-<!-- SUMMARY -->
-<div id="summary" class="summary-bar">
-  <span id="sumText"></span>
-  <div class="summary-buttons">
-    <button class="sum-btn gruen" onclick="toggleAmpel('gruen')">🟢</button>
-    <button class="sum-btn gelb" onclick="toggleAmpel('gelb')">🟡</button>
-    <button class="sum-btn rot" onclick="toggleAmpel('rot')">🔴</button>
-    <button class="sum-btn clear" onclick="clearFilter()">✖</button>
+  <div class="filter-controls">
+    <div class="filter-item">
+      <label>Bezirk:</label>
+      <select id="bezirkFilter" onchange="applyFilter()">
+        <option value="">Alle Bezirke</option>
+      </select>
+    </div>
+
+    <div class="filter-item ampel-filter">
+      <label>Ampel:</label>
+      <button class="sum-btn gruen" onclick="toggleAmpel('gruen')">🟢</button>
+      <button class="sum-btn gelb" onclick="toggleAmpel('gelb')">🟡</button>
+      <button class="sum-btn rot" onclick="toggleAmpel('rot')">🔴</button>
+      <button class="sum-btn clear" onclick="clearFilter()">✖</button>
+    </div>
   </div>
 </div>
 
@@ -60,143 +58,12 @@
   <div>Lade Statusdaten…</div>
 </div>
 
-<div id="grid"></div>
+<!-- DYNAMISCHE LISTE -->
+<div id="grid">
+  <div class="list-container" id="listContainer"></div>
+</div>
 
-<script>
-let alleBetriebe = [];
-let ampelFilter = [];   // 🔴🟡🟢 Multi-State
-
-// ---------------- INIT ----------------
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("overlay").style.display = "flex";
-  loadDataFromLocalStorage();
-  fillBezirkFilter();
-  renderDashboard();
-  document.getElementById("overlay").style.display = "none";
-});
-
-// ---------------- DATA ----------------
-function loadDataFromLocalStorage() {
-  const data = localStorage.getItem("apiData");
-  alleBetriebe = data ? JSON.parse(data) : [];
-}
-
-// ---------------- FILTER ----------------
-function fillBezirkFilter() {
-  const select = document.getElementById("bezirkFilter");
-  select.innerHTML = `<option value="">Alle Bezirke</option>`;
-  [...new Set(alleBetriebe.map(b => b.bezirk))]
-    .sort()
-    .forEach(b => {
-      const opt = document.createElement("option");
-      opt.value = b;
-      opt.textContent = b;
-      select.appendChild(opt);
-    });
-}
-
-function applyFilter(){
-  renderDashboard();
-}
-
-function toggleAmpel(farbe){
-  if(ampelFilter.includes(farbe)){
-    ampelFilter = ampelFilter.filter(f => f !== farbe);
-  } else {
-    ampelFilter.push(farbe);
-  }
-  renderDashboard();
-}
-
-function clearFilter(){
-  ampelFilter = [];
-  document.getElementById("bezirkFilter").value = "";
-  renderDashboard();
-}
-
-// ---------------- RENDER ----------------
-function renderDashboard() {
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
-
-  const bezirkFilter = document.getElementById("bezirkFilter").value;
-  let filtered = alleBetriebe;
-
-  if (bezirkFilter) {
-    filtered = filtered.filter(b => b.bezirk === bezirkFilter);
-  }
-
-  if (ampelFilter.length > 0) {
-    filtered = filtered.filter(b => ampelFilter.includes(b.ampel));
-  }
-
-  let lastBezirk = null;
-  const fragment = document.createDocumentFragment();
-
-  filtered.forEach(b => {
-
-    if (b.bezirk !== lastBezirk) {
-      const header = document.createElement("div");
-      header.className = "bezirk-header";
-      header.textContent = b.bezirk;
-      fragment.appendChild(header);
-      lastBezirk = b.bezirk;
-    }
-
-    const card = document.createElement("div");
-    card.className = "card-row";
-
-    // Ampel Anzeige (kein Filter!)
-    const ampBtn = document.createElement("button");
-    ampBtn.className = `ampel-btn ${b.ampel}`;
-    ampBtn.textContent =
-      b.ampel === "gruen" ? "🟢" :
-      b.ampel === "gelb" ? "🟡" :
-      b.ampel === "rot"  ? "🔴" : "";
-
-    // BKZ
-    const bkzLink = document.createElement("a");
-    bkzLink.href = `../marker.html?bezirk=${encodeURIComponent(b.bezirk)}&bkz=${encodeURIComponent(b.bkz)}`;
-    bkzLink.textContent = `BKZ ${b.bkz}`;
-    bkzLink.target = "_blank";
-    bkzLink.className = "bkz-link";
-
-    // Info
-    const info = document.createElement("div");
-    info.className = "card-info";
-    info.innerHTML = `(${b.bezirk}) – Dateien: <b>${b.files}</b>`;
-
-    card.appendChild(ampBtn);
-    card.appendChild(bkzLink);
-    card.appendChild(info);
-
-    fragment.appendChild(card);
-  });
-
-  grid.appendChild(fragment);
-
-  // Summary
-  const el = document.getElementById("sumText");
-  const g = filtered.filter(b => b.ampel === "gruen").length;
-  const y = filtered.filter(b => b.ampel === "gelb").length;
-  const r = filtered.filter(b => b.ampel === "rot").length;
-  el.textContent = `Gesamt: ${filtered.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
-
-  updateSummaryUI();
-}
-
-// ---------------- UI STATE ----------------
-function updateSummaryUI(){
-  document.querySelectorAll(".sum-btn").forEach(btn=>{
-    btn.classList.remove("active");
-  });
-
-  ampelFilter.forEach(f=>{
-    const btn = document.querySelector(`.sum-btn.${f}`);
-    if(btn) btn.classList.add("active");
-  });
-}
-</script>
+<script src="../js/dashboard.js"></script>
 
 </body>
 </html>
