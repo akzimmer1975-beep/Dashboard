@@ -12,34 +12,6 @@ h1 {
 }
 
 /* ===============================
-   TOP BAR
-=============================== */
-.controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.controls button {
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-.controls select {
-  padding: 6px;
-}
-
-/* ===============================
-   SUMMARY
-=============================== */
-#summary {
-  margin: 10px 0;
-  font-weight: bold;
-}
-
-/* ===============================
    GRID / VIRTUAL SCROLL
 =============================== */
 #grid {
@@ -50,19 +22,12 @@ h1 {
   background: #fff;
 }
 
-/* Spacer für Virtual Scroll */
-#grid > div {
-  box-sizing: border-box;
-}
-
-/* ===============================
-   VIEWPORT
-=============================== */
-.viewport {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
+/* WICHTIG: verhindert Viereck-Hintergrund */
+#grid,
+.viewport,
+.card-row {
+  overflow: visible !important;
+  background: transparent !important;
 }
 
 /* ===============================
@@ -79,55 +44,71 @@ h1 {
 }
 
 /* ===============================
-   CARD
+   CARD ROW
 =============================== */
-.card {
-  height: 60px;                 /* MUSS fix sein */
+.card-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid #eee;
   box-sizing: border-box;
 }
 
 /* ===============================
-   AMPEL
+   AMPEL BUTTON
 =============================== */
-.ampel {
-  width: 16px;
-  height: 16px;
+.ampel-btn {
+  min-width: 42px;
+  height: 42px;
   border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  background: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  z-index: 10;
 }
 
-.rot   { background: #e53935; }
-.gelb  { background: #fbc02d; }
-.gruen { background: #43a047; }
+.ampel-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 6px rgba(0,0,0,0.25);
+}
 
-/* ===============================
-   META
-=============================== */
-.meta {
-  margin-left: auto;
-  font-size: 12px;
-  color: #555;
+.ampel-btn.active{
+  outline: 3px solid #000;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
 /* ===============================
-   BUTTONS
+   BKZ
 =============================== */
-.btn-rot { background:#ffe5e5; }
-.btn-gelb { background:#fff4cc; }
-.btn-gruen { background:#e8f5e9; }
+.bkz-link {
+  font-weight: 600;
+  text-decoration: none;
+  color: #1a1a1a;
+  min-width: 120px;
+}
 
-.btn-rot:hover { background:#ffcccc; }
-.btn-gelb:hover { background:#ffec99; }
-.btn-gruen:hover { background:#d0f0d8; }
+.bkz-link:hover {
+  text-decoration: underline;
+}
 
+/* ===============================
+   INFO
+=============================== */
+.card-info {
+  color: #444;
+  font-size: 14px;
+  white-space: nowrap;
+}
 
-/* Overlay */
+/* ===============================
+   OVERLAY
+=============================== */
 #overlay {
   position: fixed;
   top: 0;
@@ -135,10 +116,10 @@ h1 {
   width: 100%;
   height: 100%;
   background: rgba(255,255,255,0.8);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 9999;
   font-size: 16px;
   color: #333;
   flex-direction: column;
@@ -157,62 +138,4 @@ h1 {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.card-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-}
-
-/* Sticky linker Bereich (Virtual-Scroll Look) */
-.card-row .ampel-btn {
-  position: sticky;
-  left: 0;
-  z-index: 5;
-}
-
-/* Ampel Button Design */
-.ampel-btn {
-  min-width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-  background: #f2f2f2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
-}
-
-.ampel-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 6px rgba(0,0,0,0.25);
-}
-
-/* Touch Optimierung */
-.ampel-btn:active {
-  transform: scale(0.95);
-}
-
-/* BKZ Link */
-.bkz-link {
-  font-weight: 600;
-  text-decoration: none;
-  color: #1a1a1a;
-  min-width: 120px;
-}
-
-.bkz-link:hover {
-  text-decoration: underline;
-}
-
-/* Info Text */
-.card-info {
-  color: #444;
-  font-size: 14px;
-  white-space: nowrap;
 }
