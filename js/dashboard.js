@@ -22,14 +22,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 // BETRIEBE.JSON LADEN
 // -----------------------------
 async function loadBetriebeNamen() {
+
+  const basePath = "/Dashboard";   // <-- GitHub Pages Repo-Name
+
   try {
-    const res = await fetch("/data/betriebe.json");
+    const res = await fetch(`${basePath}/data/betriebe.json`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
     const data = await res.json();
+
     data.forEach(b => {
       betriebeMap[b.bkz] = b.name;
     });
+
+    console.log("betriebe.json geladen:", Object.keys(betriebeMap).length);
+
   } catch(e) {
-    console.warn("betriebe.json nicht geladen", e);
+    console.error("betriebe.json nicht geladen:", e);
   }
 }
 
