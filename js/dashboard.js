@@ -7,7 +7,7 @@ let ampelFilter = "";
 // -----------------------------
 document.addEventListener("DOMContentLoaded", async () => {
   const overlay = document.getElementById("overlay");
-  overlay.style.display = "flex";
+  if (overlay) overlay.style.display = "flex";
 
   await loadBetriebeNamen();     // BKZ -> Name
   loadDataFromLocalStorage();    // Dashboard-Daten
@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initAmpelFilterButtons();
   renderDashboard();
 
-  overlay.style.display = "none";
+  if (overlay) overlay.style.display = "none";
 });
 
 // -----------------------------
@@ -55,6 +55,8 @@ function loadDataFromLocalStorage() {
 // -----------------------------
 function fillBezirkFilter() {
   const select = document.getElementById("bezirkFilter");
+  if (!select) return;   // ⬅ Schutz
+
   select.innerHTML = `<option value="">Alle Bezirke</option>`;
 
   [...new Set(alleBetriebe.map(b => b.bezirk))]
@@ -65,6 +67,7 @@ function fillBezirkFilter() {
       opt.textContent = b;
       select.appendChild(opt);
     });
+}
 
   select.addEventListener("change", renderDashboard);
 }
