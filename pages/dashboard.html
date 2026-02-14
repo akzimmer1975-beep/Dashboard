@@ -5,24 +5,9 @@
 <title>BR Wahlen 2026 – Dashboard</title>
 
 <link rel="stylesheet" href="../global.css">
-<link rel="stylesheet" href="../dashboard.css">
+<link rel="stylesheet" href="../css/dashboard.css">
 
-<style>
-#back-button{
-  position:absolute;
-  top:20px;
-  left:20px;
-  z-index:1000;
-}
-
-#back-button button{
-  background:white;
-  color:#228B22;
-  font-weight:bold;
-}
-</style>
 </head>
-
 <body>
 
 <div id="back-button">
@@ -35,35 +20,35 @@
 <div class="filter-box">
   <div class="filter-title">Filter</div>
 
-  <div class="filter-controls">
-    <div class="filter-item">
-      <label>Bezirk:</label>
-      <select id="bezirkFilter" onchange="applyFilter()">
+  <div class="filter-row">
+    <label>
+      Bezirk:
+      <select id="bezirkFilter">
         <option value="">Alle Bezirke</option>
       </select>
-    </div>
+    </label>
 
-    <div class="filter-item ampel-filter">
-      <label>Ampel:</label>
-      <button class="sum-btn gruen" onclick="toggleAmpel('gruen')">🟢</button>
-      <button class="sum-btn gelb" onclick="toggleAmpel('gelb')">🟡</button>
-      <button class="sum-btn rot" onclick="toggleAmpel('rot')">🔴</button>
-      <button class="sum-btn clear" onclick="clearFilter()">✖</button>
+    <div class="ampel-filter">
+      <button class="ampel-btn gruen" data-filter="gruen">🟢</button>
+      <button class="ampel-btn gelb" data-filter="gelb">🟡</button>
+      <button class="ampel-btn rot" data-filter="rot">🔴</button>
+      <button class="ampel-btn clear" data-filter="">✖</button>
     </div>
   </div>
 </div>
 
 <div id="overlay">
   <div class="spinner"></div>
-  <div>Lade Statusdaten…</div>
+  Lade Daten...
 </div>
 
-<!-- DYNAMISCHE LISTE -->
-<div id="grid">
-  <div class="list-container" id="listContainer"></div>
+<div id="summary"></div>
+
+<!-- VIRTUAL SCROLL CONTAINER -->
+<div id="grid-wrapper">
+  <div id="grid"></div>
 </div>
 
 <script src="../js/dashboard.js"></script>
-
 </body>
 </html>
