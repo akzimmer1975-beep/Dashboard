@@ -22,7 +22,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 // BETRIEBE.JSON LADEN
 // -----------------------------
 async function loadBetriebeNamen() {
-
   const basePath = "/Dashboard";   // <-- GitHub Pages Repo-Name
 
   try {
@@ -67,8 +66,8 @@ function fillBezirkFilter() {
       opt.textContent = b;
       select.appendChild(opt);
     });
-}
 
+  // Event Listener für Filteränderung
   select.addEventListener("change", renderDashboard);
 }
 
@@ -92,11 +91,13 @@ function initAmpelFilterButtons() {
 // -----------------------------
 function renderDashboard() {
   const grid = document.getElementById("grid");
+  if (!grid) return;
+
   grid.innerHTML = "";
 
   const bezirk = document.getElementById("bezirkFilter").value;
 
-  let filtered = alleBetriebe;
+  let filtered = [...alleBetriebe];
 
   if (bezirk) {
     filtered = filtered.filter(b => b.bezirk === bezirk);
@@ -137,16 +138,4 @@ function renderDashboard() {
     info.innerHTML = `(${b.bezirk}) – Dateien: <b>${b.files}</b>`;
 
     card.appendChild(amp);
-    card.appendChild(bkz);
-    card.appendChild(info);
-
-    grid.appendChild(card);
-  });
-
-  const el = document.getElementById("summary");
-  const g = filtered.filter(b => b.ampel === "gruen").length;
-  const y = filtered.filter(b => b.ampel === "gelb").length;
-  const r = filtered.filter(b => b.ampel === "rot").length;
-
-  el.textContent = `Gesamt: ${filtered.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
-}
+    card
