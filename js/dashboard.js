@@ -54,7 +54,7 @@ function loadDataFromLocalStorage() {
 // -----------------------------
 function fillBezirkFilter() {
   const select = document.getElementById("bezirkFilter");
-  if (!select) return;   // ⬅ Schutz
+  if (!select) return;
 
   select.innerHTML = `<option value="">Alle Bezirke</option>`;
 
@@ -67,7 +67,6 @@ function fillBezirkFilter() {
       select.appendChild(opt);
     });
 
-  // Event Listener für Filteränderung
   select.addEventListener("change", renderDashboard);
 }
 
@@ -87,7 +86,7 @@ function initAmpelFilterButtons() {
 }
 
 // -----------------------------
-// RENDER
+// RENDER DASHBOARD
 // -----------------------------
 function renderDashboard() {
   const grid = document.getElementById("grid");
@@ -99,18 +98,12 @@ function renderDashboard() {
 
   let filtered = [...alleBetriebe];
 
-  if (bezirk) {
-    filtered = filtered.filter(b => b.bezirk === bezirk);
-  }
-
-  if (ampelFilter) {
-    filtered = filtered.filter(b => b.ampel === ampelFilter);
-  }
+  if (bezirk) filtered = filtered.filter(b => b.bezirk === bezirk);
+  if (ampelFilter) filtered = filtered.filter(b => b.ampel === ampelFilter);
 
   let lastBezirk = null;
 
   filtered.forEach(b => {
-
     if (b.bezirk !== lastBezirk) {
       const header = document.createElement("div");
       header.className = "bezirk-header";
@@ -137,5 +130,20 @@ function renderDashboard() {
     info.className = "card-info";
     info.innerHTML = `(${b.bezirk}) – Dateien: <b>${b.files}</b>`;
 
+    // Karte zusammenbauen
     card.appendChild(amp);
-    card
+    card.appendChild(bkz);
+    card.appendChild(info);
+
+    grid.appendChild(card);
+  });
+
+  // Zusammenfassung
+  const el = document.getElementById("summary");
+  if (el) {
+    const g = filtered.filter(b => b.ampel === "gruen").length;
+    const y = filtered.filter(b => b.ampel === "gelb").length;
+    const r = filtered.filter(b => b.ampel === "rot").length;
+    el.textContent = `Gesamt: ${filtered.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
+  }
+}
