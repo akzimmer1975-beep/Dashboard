@@ -1,22 +1,49 @@
 let alleBetriebe = [];
-let ampelFilter = [];   // Multi-Ampel-Filter
+let betriebeMap = {};   // BKZ -> Name
+let ampelFilter = "";
 
-// ---------------- INIT ----------------
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("overlay").style.display = "flex";
-  loadDataFromLocalStorage();
+// -----------------------------
+// INIT
+// -----------------------------
+document.addEventListener("DOMContentLoaded", async () => {
+  const overlay = document.getElementById("overlay");
+  overlay.style.display = "flex";
+
+  await loadBetriebeNamen();     // BKZ -> Name
+  loadDataFromLocalStorage();    // Dashboard-Daten
   fillBezirkFilter();
+  initAmpelFilterButtons();
   renderDashboard();
-  document.getElementById("overlay").style.display = "none";
+
+  overlay.style.display = "none";
 });
 
-// ---------------- DATA ----------------
+// -----------------------------
+// BETRIEBE.JSON LADEN
+// -----------------------------
+async function loadBetriebeNamen() {
+  try {
+    const res = await fetch("/data/betriebe.json");
+    const data = await res.json();
+    data.forEach(b => {
+      betriebeMap[b.bkz] = b.name;
+    });
+  } catch(e) {
+    console.warn("betriebe.json nicht geladen", e);
+  }
+}
+
+// -----------------------------
+// DASHBOARD DATEN
+// -----------------------------
 function loadDataFromLocalStorage() {
   const data = localStorage.getItem("apiData");
   alleBetriebe = data ? JSON.parse(data) : [];
 }
 
-// ---------------- FILTER ----------------
+// -----------------------------
+// BEZIRK FILTER
+// -----------------------------
 function fillBezirkFilter() {
   const select = document.getElementById("bezirkFilter");
   select.innerHTML = `<option value="">Alle Bezirke</option>`;
@@ -29,45 +56,45 @@ function fillBezirkFilter() {
       opt.textContent = b;
       select.appendChild(opt);
     });
+
+  select.addEventListener("change", renderDashboard);
 }
 
-function applyFilter(){
-  renderDashboard();
+// -----------------------------
+// AMPEL FILTER BUTTONS
+// -----------------------------
+function initAmpelFilterButtons() {
+  document.querySelectorAll(".ampel-filter .ampel-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".ampel-btn").forEach(b => b.classList.remove("active"));
+      const val = btn.dataset.filter;
+      ampelFilter = val;
+      if(val) btn.classList.add("active");
+      renderDashboard();
+    });
+  });
 }
 
-function toggleAmpel(farbe){
-  if(ampelFilter.includes(farbe)){
-    ampelFilter = ampelFilter.filter(f => f !== farbe);
-  } else {
-    ampelFilter.push(farbe);
-  }
-  renderDashboard();
-}
-
-function clearFilter(){
-  ampelFilter = [];
-  document.getElementById("bezirkFilter").value = "";
-  renderDashboard();
-}
-
-// ---------------- RENDER ----------------
+// -----------------------------
+// RENDER
+// -----------------------------
 function renderDashboard() {
-  const list = document.getElementById("listContainer");
-  list.innerHTML = "";
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
 
-  const bezirkFilter = document.getElementById("bezirkFilter").value;
+  const bezirk = document.getElementById("bezirkFilter").value;
+
   let filtered = alleBetriebe;
 
-  if (bezirkFilter) {
-    filtered = filtered.filter(b => b.bezirk === bezirkFilter);
+  if (bezirk) {
+    filtered = filtered.filter(b => b.bezirk === bezirk);
   }
 
-  if (ampelFilter.length > 0) {
-    filtered = filtered.filter(b => ampelFilter.includes(b.ampel));
+  if (ampelFilter) {
+    filtered = filtered.filter(b => b.ampel === ampelFilter);
   }
 
   let lastBezirk = null;
-  const fragment = document.createDocumentFragment();
 
   filtered.forEach(b => {
 
@@ -75,53 +102,39 @@ function renderDashboard() {
       const header = document.createElement("div");
       header.className = "bezirk-header";
       header.textContent = b.bezirk;
-      fragment.appendChild(header);
+      grid.appendChild(header);
       lastBezirk = b.bezirk;
     }
 
     const card = document.createElement("div");
-    card.className = "card-row";
+    card.className = "card";
 
-    // Ampel (nur Anzeige)
-    const ampBtn = document.createElement("div");
-    ampBtn.className = `ampel-btn ${b.ampel}`;
-    ampBtn.textContent =
-      b.ampel === "gruen" ? "🟢" :
-      b.ampel === "gelb" ? "🟡" :
-      b.ampel === "rot"  ? "🔴" : "";
+    const amp = document.createElement("div");
+    amp.textContent = b.ampel === "gruen" ? "🟢" : b.ampel === "gelb" ? "🟡" : "🔴";
 
-    // BKZ
-    const bkzLink = document.createElement("a");
-    bkzLink.href = `../marker.html?bezirk=${encodeURIComponent(b.bezirk)}&bkz=${encodeURIComponent(b.bkz)}`;
-    bkzLink.textContent = `BKZ ${b.bkz}`;
-    bkzLink.target = "_blank";
-    bkzLink.className = "bkz-link";
+    const name = betriebeMap[b.bkz] ? ` – ${betriebeMap[b.bkz]}` : "";
 
-    // Info
+    const bkz = document.createElement("a");
+    bkz.className = "bkz-link";
+    bkz.href = `marker.html?bezirk=${encodeURIComponent(b.bezirk)}&bkz=${encodeURIComponent(b.bkz)}`;
+    bkz.target = "_blank";
+    bkz.textContent = `BKZ ${b.bkz}${name}`;
+
     const info = document.createElement("div");
     info.className = "card-info";
     info.innerHTML = `(${b.bezirk}) – Dateien: <b>${b.files}</b>`;
 
-    card.appendChild(ampBtn);
-    card.appendChild(bkzLink);
+    card.appendChild(amp);
+    card.appendChild(bkz);
     card.appendChild(info);
 
-    fragment.appendChild(card);
+    grid.appendChild(card);
   });
 
-  list.appendChild(fragment);
+  const el = document.getElementById("summary");
+  const g = filtered.filter(b => b.ampel === "gruen").length;
+  const y = filtered.filter(b => b.ampel === "gelb").length;
+  const r = filtered.filter(b => b.ampel === "rot").length;
 
-  updateSummaryUI();
-}
-
-// ---------------- UI STATE ----------------
-function updateSummaryUI(){
-  document.querySelectorAll(".sum-btn").forEach(btn=>{
-    btn.classList.remove("active");
-  });
-
-  ampelFilter.forEach(f=>{
-    const btn = document.querySelector(`.sum-btn.${f}`);
-    if(btn) btn.classList.add("active");
-  });
+  el.textContent = `Gesamt: ${filtered.length} | 🟢 ${g} | 🟡 ${y} | 🔴 ${r}`;
 }
