@@ -38,6 +38,7 @@
   <div class="button-group">
     <button id="dashboardBtn" disabled>Dashboard</button>
     <button id="qrBtn">QR-Generator</button>
+    <button id="mkBtn">QR-Datenablage</button>
   </div>
 
   <div id="overlay" style="display:none;">
@@ -53,6 +54,10 @@
     // QR-Button klick
     qrBtn.addEventListener("click", () => {
       window.location.href = "pages/qr.html"; // Pfad zum QR-Generator
+    });
+   // Datenablage-Button klick
+    mkBtn.addEventListener("click", () => {
+      window.location.href = "pages/marker.html"; // Pfad zum QR-Generator
     });
 
     // Dashboard-Button klick
