@@ -22,6 +22,7 @@ async function loadBetriebeNamen() {
     const res = await fetch(apiBetriebe);
     if (!res.ok) throw new Error(res.status);
     betriebData = await res.json();
+    console.log("✅ betriebData geladen:", betriebData.length, "Einträge");
   } catch (err) {
     console.error("betriebe.json nicht geladen:", err);
     betriebData = [];
@@ -253,17 +254,20 @@ async function loadStatus() {
 
     data.forEach(entry => {
       const div = document.createElement("div");
-      div.className = "status-row";
+      div.className = "card";
 
-      const color = entry.ampel === "gruen" ? "green" :
-                    entry.ampel === "gelb" ? "gold" : "red";
-      const ampCircle = `<span class="ampel" style="background-color:${color}"></span>`;
+      // Ampel-Farbe
+      const color = entry.ampel === "gruen" ? "gruen" :
+                    entry.ampel === "gelb"  ? "gelb"  : "rot";
 
+      const ampCircle = `<span class="ampel ${color}"></span>`;
+
+      // Betriebsname aus betriebData
       const betriebEntry = betriebData.find(b => b.bkz === entry.bkz);
       const betriebName = betriebEntry ? betriebEntry.betrieb : "–";
 
       div.innerHTML = `
-        <div class="bkz">${ampCircle} ${entry.bkz}</div>
+        <div class="bkz">${ampCircle} <a href="#" class="bkz-link">${entry.bkz}</a></div>
         <div class="betrieb">${betriebName}</div>
         <div class="files">${entry.files} / ${entry.bezirk}</div>
       `;
