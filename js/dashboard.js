@@ -1,5 +1,5 @@
 let alleBetriebe = [];
-let betriebeMap = {};   // BKZ -> Name
+let betriebeMap = {};   // BKZ -> Betriebsname
 let ampelFilter = "";
 
 // -----------------------------
@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const overlay = document.getElementById("overlay");
   if (overlay) overlay.style.display = "flex";
 
-  await loadBetriebeNamen();     // BKZ -> Name
-  loadDataFromLocalStorage();    // Dashboard-Daten
+  await loadBetriebeNamen();     // BKZ -> Betriebsname aus betrieb.json
+  loadDataFromLocalStorage();    // Dashboard-Daten (API Status)
   fillBezirkFilter();
   initAmpelFilterButtons();
   renderDashboard();
@@ -22,16 +22,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 // BETRIEBE.JSON LADEN
 // -----------------------------
 async function loadBetriebeNamen() {
-  const basePath = "/Dashboard";   // <-- GitHub Pages Repo-Name
-
   try {
-    const res = await fetch(`${basePath}/data/betriebe.json`);
+    const res = await fetch("/api/betriebe-json"); // liefert JSON aus Excel
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
 
+    // Map BKZ -> Betriebsname
     data.forEach(b => {
-      betriebeMap[b.bkz] = b.name;
+      betriebeMap[b.bkz] = b.betrieb;
     });
 
     console.log("betriebe.json geladen:", Object.keys(betriebeMap).length);
@@ -118,6 +117,7 @@ function renderDashboard() {
     const amp = document.createElement("div");
     amp.textContent = b.ampel === "gruen" ? "🟢" : b.ampel === "gelb" ? "🟡" : "🔴";
 
+    // Betriebsname aus Map holen
     const name = betriebeMap[b.bkz] ? ` – ${betriebeMap[b.bkz]}` : "";
 
     const bkz = document.createElement("a");
