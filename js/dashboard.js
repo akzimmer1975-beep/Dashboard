@@ -242,7 +242,7 @@ async function loadStatus() {
   const container = $("status-list");
   if (!container) return;
 
-  container.innerHTML = "<p>Lade Daten…</p>";
+  container.innerHTML = ""; // vorher leeren
 
   try {
     const res = await fetch(apiStatus);
@@ -250,19 +250,17 @@ async function loadStatus() {
     const data = await res.json();
 
     data.sort((a, b) => a.bezirk.localeCompare(b.bezirk) || a.bkz.localeCompare(b.bkz));
-    container.innerHTML = "";
 
+    // Jeder Eintrag als .card
     data.forEach(entry => {
       const div = document.createElement("div");
       div.className = "card";
 
-      // Ampel-Farbe
       const color = entry.ampel === "gruen" ? "gruen" :
                     entry.ampel === "gelb"  ? "gelb"  : "rot";
 
       const ampCircle = `<span class="ampel ${color}"></span>`;
 
-      // Betriebsname aus betriebData
       const betriebEntry = betriebData.find(b => b.bkz === entry.bkz);
       const betriebName = betriebEntry ? betriebEntry.betrieb : "–";
 
@@ -271,6 +269,7 @@ async function loadStatus() {
         <div class="betrieb">${betriebName}</div>
         <div class="files">${entry.files} / ${entry.bezirk}</div>
       `;
+
       container.appendChild(div);
     });
 
