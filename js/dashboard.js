@@ -50,47 +50,53 @@ async function loadStatus() {
 }
 
 // ============================
-// RENDER FILTERED STATUS
+// RENDER STATUS MIT BEZIRKS-ÜBERSCHRIFTEN
 // ============================
 function renderStatus() {
   const container = $("status-list");
   if (!container) return;
-
   container.innerHTML = "";
 
   let filtered = statusData;
 
-  // Bezirk filtern
-  if (bezirkFilter) {
-    filtered = filtered.filter(e => e.bezirk === bezirkFilter);
-  }
+  // Filtern nach Bezirk
+  if (bezirkFilter) filtered = filtered.filter(e => e.bezirk === bezirkFilter);
+  // Filtern nach Ampel
+  if (ampelFilter) filtered = filtered.filter(e => e.ampel === ampelFilter);
 
-  // Ampel filtern
-  if (ampelFilter) {
-    filtered = filtered.filter(e => e.ampel === ampelFilter);
-  }
+  // Gruppieren nach Bezirk
+  const grouped = {};
+  filtered.forEach(e => {
+    if (!grouped[e.bezirk]) grouped[e.bezirk] = [];
+    grouped[e.bezirk].push(e);
+  });
 
-  filtered.sort((a,b) => a.bezirk.localeCompare(b.bezirk) || a.bkz.localeCompare(b.bkz));
+  Object.keys(grouped).sort().forEach(bezirk => {
+    // Bezirk-Header
+    const header = document.createElement("div");
+    header.className = "bezirk-header";
+    header.textContent = bezirk || "–";
+    container.appendChild(header);
 
-  filtered.forEach(entry => {
-    const div = document.createElement("div");
-    div.className = "status-row";
+    grouped[bezirk].forEach(entry => {
+      const div = document.createElement("div");
+      div.className = "card";
 
-    const color = entry.ampel === "gruen" ? "#43a047" :
-                  entry.ampel === "gelb"  ? "#fbc02d" :
-                  "#e53935";
+      const color = entry.ampel === "gruen" ? "#43a047" :
+                    entry.ampel === "gelb"  ? "#fbc02d" :
+                    "#e53935";
+      const ampCircle = `<span class="ampel" style="background-color:${color}"></span>`;
 
-    const ampCircle = `<span class="ampel" style="background-color:${color}"></span>`;
+      const betriebEntry = betriebData.find(b => b.bkz === entry.bkz);
+      const betriebName = betriebEntry ? betriebEntry.betrieb : "–";
 
-    const betriebEntry = betriebData.find(b => b.bkz === entry.bkz);
-    const betriebName = betriebEntry ? betriebEntry.betrieb : "–";
-
-    div.innerHTML = `
-      <div class="bkz">${ampCircle} ${entry.bkz}</div>
-      <div class="betrieb">${betriebName}</div>
-      <div class="files">${entry.files} / ${entry.bezirk}</div>
-    `;
-    container.appendChild(div);
+      div.innerHTML = `
+        <div class="bkz-link">${ampCircle} ${entry.bkz}</div>
+        <div class="betrieb">${betriebName}</div>
+        <div class="files">${entry.files} / ${entry.bezirk}</div>
+      `;
+      container.appendChild(div);
+    });
   });
 }
 
@@ -101,14 +107,18 @@ function setupFilters() {
   const bezirkEl = $("bezirkFilter");
   if (!bezirkEl) return;
 
-  // Bezirk options befüllen
-  const bezirke = [...new Set(statusData.map(s => s.bezirk))].sort();
-  bezirke.forEach(b => {
-    const opt = document.createElement("option");
-    opt.value = b;
-    opt.textContent = b;
-    bezirkEl.appendChild(opt);
-  });
+  function populateBezirkOptions() {
+    const bezirke = [...new Set(statusData.map(s => s.bezirk))].sort();
+    bezirkEl.innerHTML = `<option value="">Alle Bezirke</option>`;
+    bezirke.forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = b;
+      opt.textContent = b;
+      bezirkEl.appendChild(opt);
+    });
+  }
+
+  populateBezirkOptions();
 
   bezirkEl.addEventListener("change", () => {
     bezirkFilter = bezirkEl.value;
@@ -137,6 +147,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Refresh alle 30 Sekunden
   setInterval(async () => {
     await loadStatus();
-    setupFilters();
   }, 30000);
 });
