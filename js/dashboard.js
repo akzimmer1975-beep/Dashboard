@@ -1,5 +1,5 @@
 let alleBetriebe = [];
-let betriebeMap = {};   // BKZ -> Betriebsname
+let betriebeMap = {};   // BKZ -> Name
 let ampelFilter = "";
 
 // -----------------------------
@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const overlay = document.getElementById("overlay");
   if (overlay) overlay.style.display = "flex";
 
-  await loadBetriebeNamen();     // BKZ -> Betriebsname aus betrieb.json
-  loadDataFromLocalStorage();    // Dashboard-Daten (API Status)
+  await loadBetriebeNamen();   // BKZ -> Name aus Server-API
+  await loadDashboardData();    // Statusdaten vom Server
   fillBezirkFilter();
   initAmpelFilterButtons();
   renderDashboard();
@@ -22,15 +22,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 // BETRIEBE.JSON LADEN
 // -----------------------------
 async function loadBetriebeNamen() {
+  const url = "https://nexrcloud-backend-2.onrender.com/api/betriebe-json"; // API Pfad
   try {
-    const res = await fetch("/api/betriebe-json"); // liefert JSON aus Excel
+    const res = await fetch(url);
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
 
-    // Map BKZ -> Betriebsname
     data.forEach(b => {
-      betriebeMap[b.bkz] = b.betrieb;
+      betriebeMap[b.bkz] = b.name || b.betrieb || ""; // fallback falls Name fehlt
     });
 
     console.log("betriebe.json geladen:", Object.keys(betriebeMap).length);
@@ -41,11 +41,22 @@ async function loadBetriebeNamen() {
 }
 
 // -----------------------------
-// DASHBOARD DATEN
+// DASHBOARD DATEN VON SERVER
 // -----------------------------
-function loadDataFromLocalStorage() {
-  const data = localStorage.getItem("apiData");
-  alleBetriebe = data ? JSON.parse(data) : [];
+async function loadDashboardData() {
+  try {
+    const res = await fetch("https://nexrcloud-backend-2.onrender.com/api/status");
+    if (!res.ok) throw new Error("API konnte nicht geladen werden");
+
+    const data = await res.json();
+    alleBetriebe = data;
+
+    console.log("Statusdaten geladen:", alleBetriebe.length);
+
+  } catch (err) {
+    console.error("Fehler beim Laden der API:", err);
+    alert("Fehler beim Laden der Statusdaten!");
+  }
 }
 
 // -----------------------------
@@ -93,7 +104,7 @@ function renderDashboard() {
 
   grid.innerHTML = "";
 
-  const bezirk = document.getElementById("bezirkFilter").value;
+  const bezirk = document.getElementById("bezirkFilter")?.value;
 
   let filtered = [...alleBetriebe];
 
@@ -117,7 +128,6 @@ function renderDashboard() {
     const amp = document.createElement("div");
     amp.textContent = b.ampel === "gruen" ? "🟢" : b.ampel === "gelb" ? "🟡" : "🔴";
 
-    // Betriebsname aus Map holen
     const name = betriebeMap[b.bkz] ? ` – ${betriebeMap[b.bkz]}` : "";
 
     const bkz = document.createElement("a");
@@ -130,7 +140,6 @@ function renderDashboard() {
     info.className = "card-info";
     info.innerHTML = `(${b.bezirk}) – Dateien: <b>${b.files}</b>`;
 
-    // Karte zusammenbauen
     card.appendChild(amp);
     card.appendChild(bkz);
     card.appendChild(info);
