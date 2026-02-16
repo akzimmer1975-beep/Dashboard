@@ -1,40 +1,42 @@
 // ============================
 // CONFIG
 // ============================
-const apiUpload = "/api/upload";
-const apiFiles  = "/api/files";
-const apiStatus = "/api/status";
-const apiBetriebeJson = "/api/betriebe-json";
+const apiFiles  = "https://nexrcloud-backend-2.onrender.com/api/files";
+const apiUpload = "https://nexrcloud-backend-2.onrender.com/api/upload";
+const apiStatus = "https://nexrcloud-backend-2.onrender.com/api/status";
+const apiBetriebe = "https://nexrcloud-backend-2.onrender.com/api/betriebe-json";
 
-// Hilfsfunktion
-const $ = id => document.getElementById(id);
-
-// ============================
-// CONTAINER DEFINITION
-// ============================
-const containers = [
-  { dropId: "drop-wahlausschreiben", filetype: "wahlausschreiben", prog: "prog-wahlausschreiben", status: "status-wahlausschreiben", list: "list-wahlausschreiben" },
-  { dropId: "drop-niederschrift",   filetype: "niederschrift",   prog: "prog-niederschrift",   status: "status-niederschrift",   list: "list-niederschrift" },
-  { dropId: "drop-wahlvorschlag",   filetype: "wahlvorschlag",   prog: "prog-wahlvorschlag",   status: "status-wahlvorschlag",   list: "list-wahlvorschlag" }
-];
+// Hilfsfunktion für getElementById
+function $(id) { return document.getElementById(id); }
 
 // ============================
-// GLOBAL DATA
+// GLOBALS
 // ============================
-let refreshTimer = null;
 let betriebData = [];
 
 // ============================
-// DEBOUNCED DATEILISTE
+// LOAD BETRIEBE.JSON
 // ============================
+async function loadBetriebeNamen() {
+  try {
+    const res = await fetch(apiBetriebe);
+    if (!res.ok) throw new Error(res.status);
+    betriebData = await res.json();
+  } catch (err) {
+    console.error("betriebe.json nicht geladen:", err);
+    betriebData = [];
+  }
+}
+
+// ============================
+// EXISTING FILES
+// ============================
+let refreshTimer = null;
 function refreshFileListDebounced() {
   if (refreshTimer) clearTimeout(refreshTimer);
   refreshTimer = setTimeout(loadExistingFiles, 300);
 }
 
-// ============================
-// EXISTIERENDE DATEIEN LADEN
-// ============================
 async function loadExistingFiles() {
   const bezirk = $("bezirk")?.value;
   const bkz    = $("bkz")?.value.trim();
@@ -58,7 +60,7 @@ async function loadExistingFiles() {
 
     target.innerHTML = `<ul>${files.map(f => `
       <li>
-        ${f.name} <br>
+        ${f.name}<br>
         <small>${new Date(f.lastModified).toLocaleString("de-DE")}</small>
       </li>`).join("")}</ul>`;
   } catch (err) {
@@ -70,6 +72,12 @@ async function loadExistingFiles() {
 // ============================
 // DRAG & DROP SETUP
 // ============================
+const containers = [
+  { dropId: "drop-wahlausschreiben", filetype: "wahlausschreiben", prog: "prog-wahlausschreiben", status: "status-wahlausschreiben", list: "list-wahlausschreiben" },
+  { dropId: "drop-niederschrift",   filetype: "niederschrift",   prog: "prog-niederschrift",   status: "status-niederschrift",   list: "list-niederschrift" },
+  { dropId: "drop-wahlvorschlag",   filetype: "wahlvorschlag",   prog: "prog-wahlvorschlag",   status: "status-wahlvorschlag",   list: "list-wahlvorschlag" }
+];
+
 function setupDrops() {
   document.addEventListener("dragover", e => e.preventDefault());
   document.addEventListener("drop", e => e.preventDefault());
@@ -80,9 +88,6 @@ function setupDrops() {
     const prog = $(c.prog);
     const list = $(c.list);
 
-    if (!el) return;
-
-    // Input Feld für Klick-Upload
     let input = $(`file-${c.filetype}`);
     if (!input) {
       input = document.createElement("input");
@@ -93,20 +98,16 @@ function setupDrops() {
       document.body.appendChild(input);
     }
 
-    // Drag & Drop Events
+    if (!el) return;
+
     el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("hover"); });
     el.addEventListener("dragleave", () => el.classList.remove("hover"));
     el.addEventListener("drop", e => { e.preventDefault(); el.classList.remove("hover"); handleFiles(c, e.dataTransfer.files); });
-
-    // Klick zum Öffnen File Dialog
     el.addEventListener("click", () => input.click());
     input.addEventListener("change", e => handleFiles(c, e.target.files));
   });
 }
 
-// ============================
-// DATEIEN HANDLING
-// ============================
 function handleFiles(container, files) {
   const el = $(container.dropId);
   const status = $(container.status);
@@ -129,24 +130,20 @@ function handleFiles(container, files) {
   updateUploadButton();
 }
 
-// ============================
-// UPLOAD BUTTON
-// ============================
 function updateUploadButton() {
   const btn = $("upload-btn");
   if (!btn) return;
-
-  const hasFiles = containers.some(c => $(c.dropId)?._files?.length > 0);
+  const hasFiles = containers.some(c => { const el = $(c.dropId); return el && el._files && el._files.length > 0; });
   btn.disabled = !hasFiles;
 }
 
 // ============================
-// SINGLE FILE UPLOAD
+// UPLOAD LOGIC
 // ============================
 function uploadSingleFile(file, filetype, container) {
   return new Promise((resolve, reject) => {
     const bezirk = $("bezirk")?.value;
-    const bkz    = $("bkz")?.value;
+    const bkz = $("bkz")?.value;
 
     if (!bezirk || !bkz) {
       reject("Bezirk/BKZ fehlt");
@@ -194,18 +191,12 @@ function uploadSingleFile(file, filetype, container) {
   });
 }
 
-// ============================
-// UPLOAD ALL
-// ============================
 async function uploadAll() {
   const btn = $("upload-btn");
   btn.disabled = true;
 
-  let totalCount = 0;
-  let successCount = 0;
-
-  containers.forEach(c => { if ($(c.dropId)?._files) totalCount += $(c.dropId)._files.length; });
-
+  let totalCount = 0, successCount = 0;
+  containers.forEach(c => { const el = $(c.dropId); if (el && el._files) totalCount += el._files.length; });
   if (totalCount === 0) { btn.disabled = false; return; }
 
   for (let c of containers) {
@@ -220,7 +211,7 @@ async function uploadAll() {
 
   if (successCount === totalCount) {
     resetUploadUI();
-    alert("Alle Dateien erfolgreich hochgeladen.");
+    alert("Alle Dateien wurden erfolgreich hochgeladen.");
     btn.disabled = true;
   } else {
     alert(`Upload abgeschlossen mit Fehlern.\n${successCount} von ${totalCount} Dateien erfolgreich.`);
@@ -228,9 +219,6 @@ async function uploadAll() {
   }
 }
 
-// ============================
-// RESET UI
-// ============================
 function resetUploadUI() {
   containers.forEach(c => {
     const el = $(c.dropId);
@@ -247,61 +235,63 @@ function resetUploadUI() {
 }
 
 // ============================
-// BETRIEBSNAMEN LADEN
+// STATUS / VIRTUAL SCROLL
 // ============================
-async function loadBetriebeNamen() {
+async function loadStatus() {
+  const container = $("status-list");
+  if (!container) return;
+
+  container.innerHTML = "<p>Lade Daten…</p>";
+
   try {
-    const res = await fetch(apiBetriebeJson);
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    betriebData = await res.json();
-    console.log("✅ Betriebe geladen:", betriebData.length);
+    const res = await fetch(apiStatus);
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+
+    data.sort((a, b) => a.bezirk.localeCompare(b.bezirk) || a.bkz.localeCompare(b.bkz));
+    container.innerHTML = "";
+
+    data.forEach(entry => {
+      const div = document.createElement("div");
+      div.className = "status-row";
+
+      const color = entry.ampel === "gruen" ? "green" :
+                    entry.ampel === "gelb" ? "gold" : "red";
+      const ampCircle = `<span class="ampel" style="background-color:${color}"></span>`;
+
+      const betriebEntry = betriebData.find(b => b.bkz === entry.bkz);
+      const betriebName = betriebEntry ? betriebEntry.betrieb : "–";
+
+      div.innerHTML = `
+        <div class="bkz">${ampCircle} ${entry.bkz}</div>
+        <div class="betrieb">${betriebName}</div>
+        <div class="files">${entry.files} / ${entry.bezirk}</div>
+      `;
+      container.appendChild(div);
+    });
+
   } catch (err) {
-    console.error("🚨 betriebe.json nicht geladen:", err);
-    betriebData = [];
+    console.error("Status konnte nicht geladen werden:", err);
+    container.innerHTML = "<p>Fehler beim Laden der Statusdaten</p>";
   }
-}
-
-// ============================
-// BKZ → BETRIEBSNAME
-// ============================
-function updateBetriebFeld() {
-  const bkzEl = $("bkz");
-  const betriebEl = $("betrieb");
-
-  if (!bkzEl || !betriebEl) return;
-
-  const bkzVal = bkzEl.value.trim();
-  const entry = betriebData.find(b => b.bkz === bkzVal);
-  betriebEl.textContent = entry ? entry.betrieb : "–";
 }
 
 // ============================
 // INIT
 // ============================
 document.addEventListener("DOMContentLoaded", async () => {
+  await loadBetriebeNamen();
   setupDrops();
   $("upload-btn")?.addEventListener("click", uploadAll);
 
-  // Felder automatisch aus URL vorausfüllen
   const params = new URLSearchParams(window.location.search);
-  const bezirkEl = $("bezirk");
-  const bkzEl = $("bkz");
+  if (params.get("bezirk")) $("bezirk").value = params.get("bezirk");
+  if (params.get("bkz")) $("bkz").value = params.get("bkz");
 
-  if (params.get("bezirk") && bezirkEl) bezirkEl.value = params.get("bezirk");
-  if (params.get("bkz") && bkzEl) bkzEl.value = params.get("bkz");
+  $("bezirk")?.addEventListener("change", refreshFileListDebounced);
+  $("bkz")?.addEventListener("input", refreshFileListDebounced);
 
-  // Event-Listener
-  if (bezirkEl) bezirkEl.addEventListener("change", refreshFileListDebounced);
-  if (bkzEl) {
-    bkzEl.addEventListener("input", refreshFileListDebounced);
-    bkzEl.addEventListener("input", updateBetriebFeld);
-  }
-
-  // Initial Daten laden
-  await loadBetriebeNamen();
-  updateBetriebFeld();
   refreshFileListDebounced();
-
-  // Upload-Button prüfen
-  updateUploadButton();
+  loadStatus();
+  setInterval(loadStatus, 30000); // Refresh alle 30 Sekunden
 });
