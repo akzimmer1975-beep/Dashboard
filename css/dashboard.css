@@ -7,7 +7,7 @@
   padding: 12px;
   margin-bottom: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  max-width: 900px;
+  max-width: 800px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -58,10 +58,95 @@
 .gruen { background:#43a047; color:#fff; }
 .gelb { background:#fbc02d; color:#000; }
 .rot { background:#e53935; color:#fff; }
-.clear { background:#e0e0e0; color:#000; }
+.clear { background:#e0e0e0; }
 
 /* ===============================
-   OVERLAY / SPINNER
+   SUMMARY
+=============================== */
+#summary {
+  font-weight: bold;
+  margin: 10px 0;
+  color: #333;
+}
+
+/* ===============================
+   VIRTUAL SCROLL
+=============================== */
+#grid-wrapper {
+  height: 70vh;
+  overflow-y: auto;
+  background: #e8f5e9;   /* hellgrüner Scrollbereich */
+  padding: 10px;
+  border-radius: 10px;
+}
+
+#status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ===============================
+   HEADER
+=============================== */
+.bezirk-header {
+  padding: 8px 10px;
+  font-weight: bold;
+  background: #c8e6c9; /* grünlicher Header */
+  border-bottom: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* ===============================
+   CARD
+=============================== */
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #ffffff;  /* weiße Karte */
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Ampel-Kreis */
+.ampel {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+/* BKZ-Link links */
+.bkz-link a {
+  font-weight: 600;
+  text-decoration: none;
+  color: #000;
+}
+
+.bkz-link a:hover {
+  text-decoration: underline;
+}
+
+/* Betriebsname mittig */
+.betrieb {
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Anzahl Dateien / Bezirk rechts */
+.files {
+  text-align: right;
+  font-size: 0.9em;
+  color: #555;
+}
+
+/* ===============================
+   OVERLAY / LOADING
 =============================== */
 #overlay {
   position: fixed;
@@ -87,93 +172,4 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-/* ===============================
-   SUMMARY
-=============================== */
-#summary {
-  font-weight: bold;
-  margin: 10px auto;
-  text-align: center;
-  color: #333;
-}
-
-/* ===============================
-   VIRTUAL SCROLL
-=============================== */
-#grid-wrapper {
-  height: 70vh;
-  overflow-y: auto;
-  background: #ffffff; /* scrollfeld weiß */
-  padding: 10px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-#status-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* ===============================
-   BEZIRK HEADER
-=============================== */
-.bezirk-header {
-  background: #f0f0f0;
-  font-weight: bold;
-  padding: 8px 10px;
-  border-bottom: 1px solid #ddd;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-/* ===============================
-   CARD
-=============================== */
-.card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* Ampel links, Name Mitte, Dateien/Bezirk rechts */
-  gap: 10px;
-  padding: 8px 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.bkz-link {
-  font-weight: 600;
-  min-width: 80px;
-  text-decoration: none;
-  color: #000;
-}
-
-.bkz-link:hover {
-  text-decoration: underline;
-}
-
-.betrieb {
-  flex: 1;
-  text-align: center;
-  font-weight: 500;
-  color: #444;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.files {
-  min-width: 140px;
-  text-align: right;
-  font-size: 14px;
-  color: #666;
-}
-
-.ampel {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  margin-right: 5px;
 }
